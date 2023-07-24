@@ -81,6 +81,7 @@ def train_GNN(model, train_loader,val_loader,test_loader,optimizer,criterion,n_e
     #print('best epoch:',best_val_epoch,'train acc: ',train_acc_best_model,'test acc',test_acc_best_model,'best val acc:',best_val_acc)
 
     train_loss=GNN_core.calc_loss(model=best_model,loader=train_loader,criterion=criterion)
+    print('train loss',train_loss)
     score= -train_loss.item()+0.6
     if score<0:
         score=0

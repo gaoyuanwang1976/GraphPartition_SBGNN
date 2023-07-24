@@ -118,7 +118,7 @@ if __name__ == '__main__':
     ray.init()
     if args.initial_mu=='identity':
         mu=[0.]*(meta_feature_dim*num_node_features+meta_feature_dim) ##set the initial value to (partial) identity matrix
-        for i in range(num_node_features):
+        for i in range(meta_feature_dim):
             mu[meta_feature_dim+i*num_node_features+i]=1.
     else:
         mu=np.loadtxt(args.initial_mu)
@@ -131,6 +131,21 @@ if __name__ == '__main__':
     val_accu_list=[]
     test_accu_list=[]
     train_accu_list=[]
+
+    ########################################################################################
+    # Automatically load last chcekpoint once program is interrupted
+    if output_path!=None:
+        if os.path.exists(output_path):
+            checkpoints = os.listdir(output_path)
+            if len(checkpoints) != 0 :
+                t = max([int(checkpoint.split('t')[1]) for checkpoint in checkpoints]) - 1
+                if t != -1:
+                    mu = np.loadtxt(os.path.join(output_path, 't' + str(t), 'mu.txt'))
+                    sigma = np.loadtxt(os.path.join(output_path, 't' + str(t), 'sigma.txt'))
+                else:
+                    t = 0
+    ########################################################################################
+
     while epsilon<sigma and t<60:
         print('\n start with t =',t)
         N_sample=15
@@ -158,7 +173,7 @@ if __name__ == '__main__':
         sample_1=[np.float_(row[0]) for row in output_1]
         objective_func_1=np.array([row[1] for row in output_1])
 
-        new_sigma=smoothing_based_optimizer.update_sigma(sample,objective_func,current_mu=new_mu)
+        new_sigma=smoothing_based_optimizer.update_sigma(sample_1,objective_func_1,current_mu=new_mu)
         if new_sigma==None:
             new_sigma=sigma
         time2=time.time()

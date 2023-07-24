@@ -105,13 +105,15 @@ def test(model,loader):
         correct += int((pred == data.y).sum())  # Check against ground-truth labels.
     return correct / len(loader.dataset)  # Derive ratio of correct predictions.
 
-def calc_loss(model, loader,criterion):
+def calc_loss(model, loader, criterion):
     model.eval()
-    for data in loader:  # Iterate in batches over the training dataset.
-        #model.conv1.register_forward_hook(get_activation('conv3'))
-        out = model(data.x, data.edge_index, data.batch)  # Perform a single forward pass.
-        loss = criterion(out, data.y)
-    return loss
+    loss=0.
+    with torch.no_grad():
+        for data in loader:  # Iterate in batches over the training dataset.
+            #model.conv1.register_forward_hook(get_activation('conv3'))
+            out = model(data.x, data.edge_index, data.batch)  # Perform a single forward pass.
+            loss += criterion(out, data.y) * data.num_graphs
+    return loss/len(loader.dataset)
 
 def predict(model,loader):
     model.eval()
