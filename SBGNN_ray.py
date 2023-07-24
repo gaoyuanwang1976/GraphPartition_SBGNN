@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
     while epsilon<sigma and t<60:
         print('\n start with t =',t)
-        N_sample=2
+        N_sample=15
         time1=time.time()
         BATCHES=N_sample
         results=[]
