@@ -81,7 +81,6 @@ def train_GNN(model, train_loader,val_loader,test_loader,optimizer,criterion,n_e
     #print('best epoch:',best_val_epoch,'train acc: ',train_acc_best_model,'test acc',test_acc_best_model,'best val acc:',best_val_acc)
 
     train_loss=GNN_core.calc_loss(model=best_model,loader=train_loader,criterion=criterion)
-    print('train loss',train_loss)
     score= -train_loss.item()+0.6
     if score<0:
         score=0
@@ -116,7 +115,7 @@ def calc_loss_onePoint(mu,sigma,meta_feature_dim,num_node_features,graph_dataset
     for g in graph_dataset:
         node_degree=len(g['edge_index'][0])/len(g['x'])
         degree_list.append(node_degree)
-    print(np.mean(np.array(degree_list)),len(degree_list))
+    #print(np.mean(np.array(degree_list)),len(degree_list))
 
     train_dataset = graph_dataset[:part1]
     test_dataset = graph_dataset[part1:part2]
