@@ -165,26 +165,26 @@ if __name__ == '__main__':
         if type(new_mu)!=np.ndarray and new_mu==None:
             new_mu=mu
 
-        results_1=[]
-        for _ in range(BATCHES):
-            results_1.append(smoothing_based_optimizer.calc_loss_onePoint.remote(new_mu,sigma,meta_feature_dim,num_node_features,graph_dataset,part1,part2,batch_size,n_epochs,args.patience,degree_matrices,distance_matrices,hidden_channels,num_layers,arch,lr,cluster_params))
-        output_1 = ray.get(results_1)
+#        results_1=[]
+#        for _ in range(BATCHES):
+#            results_1.append(smoothing_based_optimizer.calc_loss_onePoint.remote(new_mu,sigma,meta_feature_dim,num_node_features,graph_dataset,part1,part2,batch_size,n_epochs,args.patience,degree_matrices,distance_matrices,hidden_channels,num_layers,arch,lr,cluster_params))
+#        output_1 = ray.get(results_1)
 
-        sample_1=[np.float_(row[0]) for row in output_1]
-        objective_func_1=np.array([row[1] for row in output_1])
+#        sample_1=[np.float_(row[0]) for row in output_1]
+#        objective_func_1=np.array([row[1] for row in output_1])
 
-        new_sigma=smoothing_based_optimizer.update_sigma(sample_1,objective_func_1,current_mu=new_mu)
+        new_sigma=smoothing_based_optimizer.update_sigma(sample,objective_func,current_mu=new_mu)
         if new_sigma==None:
             new_sigma=sigma
         time2=time.time()
         print('calculate all',N_sample,'samples in t =',t,'in time',time2-time1)
 
-        val_accu=[row[2] for row in output_1]
-        train_accu=[row[3] for row in output_1]
-        test_accu=[row[4] for row in output_1]
-        best_model=[row[5] for row in output_1]
+        val_accu=[row[2] for row in output]
+        train_accu=[row[3] for row in output]
+        test_accu=[row[4] for row in output]
+        best_model=[row[5] for row in output]
         if output_path!=None:
-            smoothing_based_optimizer.store_model_params(output_path,sample_1,objective_func_1,best_model,val_accu,train_accu,test_accu,t)
+            smoothing_based_optimizer.store_model_params(output_path,sample,objective_func,best_model,val_accu,train_accu,test_accu,t)
 
             my_path=str(output_path)+'/t'+str(t)
             with open(my_path+'/mu.txt', 'w') as fp:
@@ -201,7 +201,8 @@ if __name__ == '__main__':
         train_accu_list.append(average_train_accu)
         test_accu_list.append(average_test_accu)
         print('all test accuracies:',np.round_(test_accu,2))
-        print('sigma:',round(sigma,5))
+        print('sigma:',sigma)
+        print('new_sigma',new_sigma)
         print('average val accuracy:',average_val_accu)
         print('average train accuracy:',average_train_accu)
         print('average test accuracy:',average_test_accu)
