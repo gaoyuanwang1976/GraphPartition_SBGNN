@@ -131,6 +131,7 @@ if __name__ == '__main__':
     val_accu_list=[]
     test_accu_list=[]
     train_accu_list=[]
+    test_auc_list=[]
 
     ########################################################################################
     # Automatically load last chcekpoint once program is interrupted
@@ -182,9 +183,10 @@ if __name__ == '__main__':
         val_accu=[row[2] for row in output]
         train_accu=[row[3] for row in output]
         test_accu=[row[4] for row in output]
-        best_model=[row[5] for row in output]
+        test_auc=[row[5] for row in output]
+        best_model=[row[6] for row in output]
         if output_path!=None:
-            smoothing_based_optimizer.store_model_params(output_path,sample,objective_func,best_model,val_accu,train_accu,test_accu,t)
+            smoothing_based_optimizer.store_model_params(output_path,sample,objective_func,best_model,val_accu,train_accu,test_accu,test_auc,t)
 
             my_path=str(output_path)+'/t'+str(t)
             with open(my_path+'/mu.txt', 'w') as fp:
@@ -196,16 +198,21 @@ if __name__ == '__main__':
         average_val_accu=round(np.mean(val_accu),3)
         average_train_accu=round(np.mean(train_accu),3)
         average_test_accu=round(np.mean(test_accu),3)
+        average_test_auc=round(np.mean(test_auc),3)
 
         val_accu_list.append(average_val_accu)
         train_accu_list.append(average_train_accu)
         test_accu_list.append(average_test_accu)
-        print('all test accuracies:',np.round_(test_accu,2))
+        test_auc_list.append(average_test_auc)
+
+        print('all test accuracies:',np.round_(test_accu,3))
+        print('all test auc:',np.round_(test_auc,3))
         print('sigma:',sigma)
         print('new_sigma',new_sigma)
         print('average val accuracy:',average_val_accu)
         print('average train accuracy:',average_train_accu)
         print('average test accuracy:',average_test_accu)
+        print('average test auc:',average_test_auc)
 
         sigma=new_sigma
         mu=new_mu
@@ -214,3 +221,4 @@ if __name__ == '__main__':
     print('final mu',mu)
     print('all mean val',val_accu_list)
     print('all mean test',test_accu_list)
+    print('all mean test auc',test_auc_list)

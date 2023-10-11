@@ -7,6 +7,7 @@ import torch
 from torch_geometric.loader import DataLoader
 import os
 import json
+import sklearn
 
 def gaussian_sampling(mu,sigma):
     cov=np.zeros((len(mu),len(mu)))
@@ -78,13 +79,23 @@ def train_GNN(model, train_loader,val_loader,test_loader,optimizer,criterion,n_e
             break
     train_acc_best_model=GNN_core.test(model=best_model,loader=train_loader)
     test_acc_best_model=GNN_core.test(model=best_model,loader=test_loader)
+    y_prob_tmp=GNN_core.predict_prob(model=best_model,loader=test_loader)
+    y_prob=[]
+    for y_batch in y_prob_tmp:
+        for y_data in y_batch:
+            y_prob.append(y_data[1])
+    y_true=[]
+    for y_batch in test_loader:
+        for i in y_batch['y']:
+            y_true.append(i.tolist())
+    test_auc=sklearn.metrics.roc_auc_score(y_true,y_prob)
     #print('best epoch:',best_val_epoch,'train acc: ',train_acc_best_model,'test acc',test_acc_best_model,'best val acc:',best_val_acc)
 
     train_loss=GNN_core.calc_loss(model=best_model,loader=train_loader,criterion=criterion)
     score= -train_loss.item()+0.6
     if score<0:
         score=0
-    return score,best_val_acc,train_acc_best_model,test_acc_best_model,best_model
+    return score,best_val_acc,train_acc_best_model,test_acc_best_model,test_auc,best_model
 
 @ray.remote
 def calc_loss_onePoint(mu,sigma,meta_feature_dim,num_node_features,graph_dataset,part1,part2,batch_size,n_epochs,patience,degree_matrices,distance_matrices,hidden_channels,num_layers,arch,lr,cluster_params):
@@ -123,8 +134,8 @@ def calc_loss_onePoint(mu,sigma,meta_feature_dim,num_node_features,graph_dataset
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-    test_loss,best_val_acc,train_acc_best_model,test_acc_best_model,best_model=train_GNN(model=model, train_loader=train_loader,val_loader=val_loader,test_loader=test_loader,optimizer=optimizer,criterion=criterion,n_epochs=n_epochs,patience=patience)
-    return [list(preLin_param),test_loss,best_val_acc,train_acc_best_model,test_acc_best_model,best_model]
+    test_loss,best_val_acc,train_acc_best_model,test_acc_best_model,test_auc,best_model=train_GNN(model=model, train_loader=train_loader,val_loader=val_loader,test_loader=test_loader,optimizer=optimizer,criterion=criterion,n_epochs=n_epochs,patience=patience)
+    return [list(preLin_param),test_loss,best_val_acc,train_acc_best_model,test_acc_best_model,test_auc,best_model]
 
 @ray.remote
 def calc_degree_ray(graph_dataset,i):
@@ -145,7 +156,7 @@ def calc_distance_ray(graph_dataset,i):
     return distance_matrix
 
 
-def store_model_params(path,sample,objective_func,models,val_accu,train_accu,test_accu,t):
+def store_model_params(path,sample,objective_func,models,val_accu,train_accu,test_accu,test_auc,t):
     N_sample=len(objective_func)
     isExist = os.path.exists(path)
     if not isExist:
@@ -161,6 +172,7 @@ def store_model_params(path,sample,objective_func,models,val_accu,train_accu,tes
         my_dict["train_accu"]=train_accu[index]
         my_dict["val_accu"]=val_accu[index]
         my_dict["test_accu"]=test_accu[index]
+        my_dict["test_auc"]=test_auc[index]
         print('my_dict',my_dict)
 
 

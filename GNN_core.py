@@ -2,7 +2,7 @@ from torch.nn import Linear
 from torch_geometric.nn import global_mean_pool
 import torch
 from torch_geometric.nn import GraphConv,TransformerConv,GCNConv
-
+import numpy as np
 
 
 class GCN(torch.nn.Module):
@@ -123,6 +123,19 @@ def predict(model,loader):
         pred.append(out.argmax(dim=1).tolist())  # Use the class with highest probability.
     return pred 
 
+def predict_prob(model,loader):
+    model.eval()
+    pred_prob=[]
+    for data in loader:  # Iterate in batches over the training/test dataset.
+        out = model(data.x, data.edge_index, data.batch)
+        out_tmp=[]
+        for i in out:
+            current_prob=i.tolist()
+            exp_raw_outputs = np.exp(current_prob)
+            class_probabilities = exp_raw_outputs / exp_raw_outputs.sum()
+            out_tmp.append(list(class_probabilities))
+        pred_prob.append(out_tmp)  # Use the class with highest probability.
+    return pred_prob
 
 def loss(model,loader,criterion):
     model.eval()
